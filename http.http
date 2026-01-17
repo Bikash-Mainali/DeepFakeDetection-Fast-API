@@ -1,0 +1,7 @@
+### Send POST request with json body
+POST http://localhost:8080
+Content-Type: application/json
+
+{
+  "media": "image_url_here"
+}
