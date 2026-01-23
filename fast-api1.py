@@ -41,45 +41,43 @@ app.add_middleware(
     allow_methods=["*"],        # GET, POST, etc
     allow_headers=["*"],        # allow all headers
 )
-
 @app.post("/detect-deepfake")
 async def detect_deepfake(request: ImageRequest):
     try:
-        # Decode the base64 image and convert to JPEG
+        # 1️⃣ Decode base64 (already JPEG)
         image_bytes = base64.b64decode(request.image)
-        img = Image.open(BytesIO(image_bytes))
-        print(f"Original image size: {img.size}, format: {img.format}")
 
-        # Convert to RGB for JPEG
-        img = img.convert("RGB")
-        print(f"Converted image to RGB, format: {img.format}")
+        # 2️⃣ Save to temp JPEG file
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
 
-        # Save to a temporary file (close first)
-        tmp_file = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-        tmp_file_path = tmp_file.name
-        tmp_file.close()  # close before writing with Pillow
-        img.save(tmp_file_path, format="JPEG")
-        print(f"Saved converted image to: {tmp_file_path}")
-
-        # Prepare request to external API
+        # 3️⃣ Call Sightengine
         params = {
-            'models': "genai",
-            'api_user': API_USER,
-            'api_secret': API_SECRET
+            "models": "genai",
+            "api_user": API_USER,
+            "api_secret": API_SECRET,
         }
-        files = {'media': open(tmp_file_path, 'rb')}
-        response = requests.post(SIGHTENGINE_URL, files=files, data=params)
-        files['media'].close()  # Close the file after sending
 
-        # Remove temporary file
-        os.remove(tmp_file_path)
+        with open(tmp_path, "rb") as img_file:
+            response = requests.post(
+                SIGHTENGINE_URL,
+                files={"media": img_file},
+                data=params,
+                timeout=30,
+            )
 
-        # Return the response from Sightengine
-        print(f"Sightengine response: {response.text}")
+        # 4️⃣ Cleanup
+        os.remove(tmp_path)
+
+        # 5️⃣ Return Sightengine response
         return response.json()
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to process image: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to process image: {str(e)}"
+        )
 
 @app.post("/detect-deepfake-test")
 async def receive_image(request: ImageRequest):

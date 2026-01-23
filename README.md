@@ -31,13 +31,15 @@ This is a FastAPI project. Follow the steps below to set up and run the project 
 5. ```bash
    pip install -r requirements.txt
    ```
-6. **Run the FastAPI Application**
+   
+6. **Add API, USER, SECRET from secret manager**
+7. **Run the FastAPI Application**
    ```bash
    uvicorn fast-api:app --host 0.0.0.0 --port 8000
    ```
     - Here, `fast-api` is the name of your Python file (without the `.py` extension) and `app` is the name of the
       FastAPI instance.
-7. **Access the Application**
+8**Access the Application**
     - your server should now be running at `http://localhost:8000`
     - You can access the automatic interactive API documentation at `http://localhost:8000/docs` or
       `http://localhost:8000/redoc`
